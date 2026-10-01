@@ -73,7 +73,7 @@ function WorkerModal({ worker, onClose, onSave }: { worker: Worker; onClose: () 
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.active} onChange={(e) => set("active", e.target.checked)} className="h-4 w-4 accent-[var(--blue)]" /> Account active (can sign in)</label>
         </div>
         <div className="mt-3 rounded-lg p-2.5 text-xs" style={{ background: "var(--blue-50)", color: "var(--navy)" }}>
-          <b>Storekeeper:</b> receive/issue/adjust stock. <b>Manager:</b> + products, purchasing &amp; reports. <b>Owner:</b> full access incl. team &amp; costs.
+          <b>Storekeeper:</b> products, stock, purchasing, suppliers &amp; reports. <b>Manager:</b> + product removal. <b>Owner:</b> full access including team accounts.
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className="btn btn-ghost">Cancel</button>

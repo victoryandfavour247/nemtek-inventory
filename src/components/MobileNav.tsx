@@ -15,7 +15,7 @@ export default function MobileNav() {
     { href: "/inventory", label: "Products" },
     { href: "/movements", label: "Stock Log" },
     ...(can.managePurchasing(role) ? [{ href: "/purchase-orders", label: "Purchase Orders" }, { href: "/suppliers", label: "Suppliers" }] : []),
-    ...(can.viewReports(role) ? [{ href: "/reports", label: "Reports" }] : []),
+    ...(can.viewReports(role) ? [{ href: "/reports", label: "Reports & Valuation" }] : []),
     ...(can.manageWorkers(role) ? [{ href: "/team", label: "Team" }] : []),
   ];
 

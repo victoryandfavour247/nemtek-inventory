@@ -33,35 +33,43 @@ export default function Sidebar() {
   const a = (p: string) => path === p;
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r bg-[var(--surface)] p-3 lg:flex" style={{ borderColor: "var(--border)" }}>
+    <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col overflow-hidden border-r bg-[var(--surface)] p-3 lg:flex" style={{ borderColor: "var(--border)" }}>
       <Link href="/" className="mb-5 px-2 pt-2"><Brand size={40} /></Link>
 
-      <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Overview</div>
-      <nav className="flex flex-col gap-1">
-        <Item href="/" icon={ICONS.dash} label="Dashboard" active={a("/")} />
-        <Item href="/inventory" icon={ICONS.box} label="Products" active={a("/inventory")} />
-        <Item href="/movements" icon={ICONS.moves} label="Stock Log" active={a("/movements")} />
-      </nav>
-
-      {can.managePurchasing(role) && <>
-        <div className="mt-4 px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Purchasing</div>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Overview</div>
         <nav className="flex flex-col gap-1">
-          <Item href="/purchase-orders" icon={ICONS.po} label="Purchase Orders" active={a("/purchase-orders")} />
-          <Item href="/suppliers" icon={ICONS.supplier} label="Suppliers" active={a("/suppliers")} />
+          <Item href="/" icon={ICONS.dash} label="Dashboard" active={a("/")} />
+          <Item href="/inventory" icon={ICONS.box} label="Products" active={a("/inventory")} />
+          <Item href="/movements" icon={ICONS.moves} label="Stock Log" active={a("/movements")} />
         </nav>
-      </>}
 
-      {(can.viewReports(role) || can.manageWorkers(role)) && <>
-        <div className="mt-4 px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Manage</div>
-        <nav className="flex flex-col gap-1">
-          {can.viewReports(role) && <Item href="/reports" icon={ICONS.report} label="Reports" active={a("/reports")} />}
-          {can.manageWorkers(role) && <Item href="/team" icon={ICONS.team} label="Team" active={a("/team")} />}
-        </nav>
-      </>}
+        {can.managePurchasing(role) && <>
+          <div className="mt-4 px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Operations</div>
+          <nav className="flex flex-col gap-1">
+            <Item href="/purchase-orders" icon={ICONS.po} label="Purchase Orders" active={a("/purchase-orders")} />
+            <Item href="/suppliers" icon={ICONS.supplier} label="Suppliers" active={a("/suppliers")} />
+          </nav>
+        </>}
 
-      <div className="mt-auto rounded-xl p-3 text-xs" style={{ background: "var(--blue-50)", color: "var(--navy)" }}>
-        <div className="font-bold">Advanced Inventory</div>
-        <div className="mt-0.5 text-[var(--text-soft)]">Stock levels, purchase orders, suppliers and valuation — all in one place.</div>
+        {can.viewReports(role) && <>
+          <div className="mt-4 px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Insights</div>
+          <nav className="flex flex-col gap-1">
+            <Item href="/reports" icon={ICONS.report} label="Reports & Valuation" active={a("/reports")} />
+          </nav>
+        </>}
+
+        {can.manageWorkers(role) && <>
+          <div className="mt-4 px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-faint)]">Administration</div>
+          <nav className="flex flex-col gap-1">
+            <Item href="/team" icon={ICONS.team} label="Team" active={a("/team")} />
+          </nav>
+        </>}
+      </div>
+
+      <div className="mt-3 rounded-xl border p-3 text-xs" style={{ background: "var(--blue-50)", borderColor: "#cbd9fb", color: "var(--navy)" }}>
+        <div className="flex items-center gap-1.5 font-bold"><span className="h-2 w-2 rounded-full bg-[var(--green)]" />Advanced tools enabled</div>
+        <div className="mt-1 leading-4 text-[var(--text-soft)]">Purchasing, suppliers, reports and valuation are ready to use.</div>
       </div>
     </aside>
   );

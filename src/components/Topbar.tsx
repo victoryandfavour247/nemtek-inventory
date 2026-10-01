@@ -7,7 +7,7 @@ import Brand from "./Brand";
 
 const TITLES: Record<string, string> = {
   "/": "Dashboard", "/inventory": "Products", "/movements": "Stock Log",
-  "/purchase-orders": "Purchase Orders", "/suppliers": "Suppliers", "/reports": "Reports", "/team": "Team",
+  "/purchase-orders": "Purchase Orders", "/suppliers": "Suppliers", "/reports": "Reports & Valuation", "/team": "Team",
 };
 
 export default function Topbar() {

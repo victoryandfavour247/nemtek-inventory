@@ -107,12 +107,12 @@ export const ROLE_LABEL: Record<Role, string> = { owner: "Owner", manager: "Mana
 /* role permissions */
 export const can = {
   manageWorkers: (r: Role) => r === "owner",
-  viewReports: (r: Role) => r === "owner" || r === "manager",
-  editInventory: (_r: Role) => true,                                // any signed-in user can add/edit products
+  viewReports: (r: Role) => Boolean(r),                             // reports available to every signed-in user
+  editInventory: (r: Role) => Boolean(r),                           // any signed-in user can add/edit products
   deleteInventory: (r: Role) => r === "owner" || r === "manager",   // removing products restricted
-  moveStock: (_r: Role) => true,                                     // receive / issue / adjust
-  managePurchasing: (r: Role) => r === "owner" || r === "manager",  // POs & suppliers
-  viewCost: (r: Role) => r === "owner" || r === "manager",
+  moveStock: (r: Role) => Boolean(r),                               // receive / issue / adjust
+  managePurchasing: (r: Role) => Boolean(r),                        // POs & suppliers available to storekeepers too
+  viewCost: (r: Role) => Boolean(r),                                // valuation is part of advanced inventory
 };
 
 export const fmt = (n: number) =>
