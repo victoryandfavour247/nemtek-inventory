@@ -6,8 +6,8 @@ import { ROLE_LABEL } from "@/lib/inventory";
 import Brand from "./Brand";
 
 const TITLES: Record<string, string> = {
-  "/": "Dashboard", "/pos": "Point of Sale", "/inventory": "Inventory",
-  "/sales": "Sales", "/movements": "Stock Log", "/reports": "Reports", "/team": "Team",
+  "/": "Dashboard", "/inventory": "Products", "/movements": "Stock Log",
+  "/purchase-orders": "Purchase Orders", "/suppliers": "Suppliers", "/reports": "Reports", "/team": "Team",
 };
 
 export default function Topbar() {
@@ -23,9 +23,9 @@ export default function Topbar() {
       <h1 className="text-lg font-black">{TITLES[path] ?? "NEMTEK"}</h1>
 
       <div className="ml-auto flex items-center gap-2">
-        <Link href="/pos" className="btn btn-primary btn-sm hidden sm:inline-flex">
+        <Link href="/inventory" className="btn btn-primary btn-sm hidden sm:inline-flex">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
-          New sale
+          Add product
         </Link>
         <Link href="/inventory" className="relative grid h-10 w-10 place-items-center rounded-xl hover:bg-[var(--surface-2)]" title={`${low} low-stock items`}>
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0"/></svg>

@@ -12,10 +12,9 @@ export default function MobileNav() {
 
   const links = [
     { href: "/", label: "Dashboard" },
-    { href: "/pos", label: "Point of Sale" },
-    { href: "/inventory", label: "Inventory" },
-    { href: "/sales", label: "Sales" },
+    { href: "/inventory", label: "Products" },
     { href: "/movements", label: "Stock Log" },
+    ...(can.managePurchasing(role) ? [{ href: "/purchase-orders", label: "Purchase Orders" }, { href: "/suppliers", label: "Suppliers" }] : []),
     ...(can.viewReports(role) ? [{ href: "/reports", label: "Reports" }] : []),
     ...(can.manageWorkers(role) ? [{ href: "/team", label: "Team" }] : []),
   ];
