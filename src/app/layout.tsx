@@ -8,8 +8,8 @@ import Toaster from "@/components/Toaster";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NEMTEK Inventory & POS",
-  description: "Inventory, point of sale and store management for NEMTEK Store Ghana — owner and staff.",
+  title: "NEMTEK Inventory",
+  description: "Advanced inventory management for NEMTEK Store Ghana — stock, purchase orders, suppliers and valuation.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

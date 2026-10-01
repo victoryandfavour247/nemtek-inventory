@@ -20,6 +20,7 @@ export interface InventoryItem {
   supplierId: string;
   location: string;     // shelf / bin
   barcode: string;
+  image?: string;       // optional uploaded photo (data URL); falls back to catalogue art
 }
 
 export type Role = "owner" | "manager" | "staff";
@@ -107,8 +108,8 @@ export const ROLE_LABEL: Record<Role, string> = { owner: "Owner", manager: "Mana
 export const can = {
   manageWorkers: (r: Role) => r === "owner",
   viewReports: (r: Role) => r === "owner" || r === "manager",
-  editInventory: (r: Role) => r === "owner" || r === "manager",     // product master
-  deleteInventory: (r: Role) => r === "owner",
+  editInventory: (_r: Role) => true,                                // any signed-in user can add/edit products
+  deleteInventory: (r: Role) => r === "owner" || r === "manager",   // removing products restricted
   moveStock: (_r: Role) => true,                                     // receive / issue / adjust
   managePurchasing: (r: Role) => r === "owner" || r === "manager",  // POs & suppliers
   viewCost: (r: Role) => r === "owner" || r === "manager",

@@ -13,7 +13,7 @@ export default function Brand({
       {showText && (
         <span className="leading-none">
           <span className="block text-[15px] font-black" style={{ color: light ? "#fff" : "var(--text)" }}>NEMTEK</span>
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: light ? "rgba(255,255,255,.7)" : "var(--text-faint)" }}>Inventory · POS</span>
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.2em]" style={{ color: light ? "rgba(255,255,255,.7)" : "var(--text-faint)" }}>Inventory</span>
         </span>
       )}
     </span>

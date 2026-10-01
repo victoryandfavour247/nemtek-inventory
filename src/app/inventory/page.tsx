@@ -1,31 +1,81 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useStore } from "@/store/Store";
 import { fmt, CATEGORIES, can, type InventoryItem, type CategoryKey, type Brand, type MovementType } from "@/lib/inventory";
 import ItemImage from "@/components/ItemImage";
+import BarcodeScanner from "@/components/BarcodeScanner";
 
 type StockFilter = "all" | "low" | "out" | "in";
 
-const blank = (supplierId: string): InventoryItem => ({
-  id: "new-" + Math.random().toString(36).slice(2, 7), sku: "", name: "", brand: "NEMTEK", category: "accessories",
+/* read a file, downscale to <=600px and return a compact JPEG data URL */
+function fileToDataUrl(file: File, max = 600): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = reject;
+      img.src = reader.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+const blank = (supplierId: string, id = "new-" + Math.random().toString(36).slice(2, 7)): InventoryItem => ({
+  id, sku: "", name: "", brand: "NEMTEK", category: "accessories",
   cost: 0, price: 0, stock: 0, reorderLevel: 5, reorderQty: 20, supplierId, location: "", barcode: "",
 });
 
-export default function Products() {
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="card p-6 text-sm text-[var(--text-soft)]">Loading products…</div>}>
+      <Products />
+    </Suspense>
+  );
+}
+
+function Products() {
   const { items, suppliers, user, upsertItem, deleteItem, moveStock, setStock } = useStore();
+  const searchParams = useSearchParams();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<CategoryKey | "all">("all");
   const [brand, setBrand] = useState<Brand | "all">("all");
-  const [stockF, setStockF] = useState<StockFilter>("all");
+  const [stockF, setStockF] = useState<StockFilter>(() => {
+    const filter = searchParams.get("filter");
+    return filter === "low" || filter === "out" ? filter : "all";
+  });
   const [sort, setSort] = useState("name");
   const [edit, setEdit] = useState<InventoryItem | null>(null);
   const [stockFor, setStockFor] = useState<InventoryItem | null>(null);
+  const [scanFind, setScanFind] = useState(false);
 
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get("filter");
-    if (p === "low") setStockF("low");
-    if (p === "out") setStockF("out");
-  }, []);
+  const addRequested = searchParams.get("action") === "add";
+  const requestedDraft = addRequested ? blank(suppliers[0]?.id ?? "", "new-header") : null;
+  const activeEdit = edit ?? requestedDraft;
+
+  const clearAddRequest = () => {
+    if (!addRequested) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("action");
+    const query = next.toString();
+    window.history.replaceState(null, "", query ? `/inventory?${query}` : "/inventory");
+  };
+
+  const closeEditor = () => {
+    setEdit(null);
+    clearAddRequest();
+  };
 
   const role = user!.role;
   const mayEdit = can.editInventory(role);
@@ -74,6 +124,10 @@ export default function Products() {
         <select value={sort} onChange={(e) => setSort(e.target.value)} className="input" style={{ width: "auto" }}>
           <option value="name">Sort: Name</option><option value="stock">Lowest stock</option><option value="value">Highest value</option><option value="price">Highest price</option>
         </select>
+        <button onClick={() => setScanFind(true)} className="btn btn-outline btn-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M6 8v8M10 8v8M14 8v8M18 8v8"/></svg>
+          Scan
+        </button>
         <button onClick={exportCsv} className="btn btn-outline btn-sm">Export CSV</button>
         {mayEdit && <button onClick={() => setEdit(blank(suppliers[0]?.id ?? ""))} className="btn btn-primary btn-sm">+ Add product</button>}
       </div>
@@ -130,10 +184,17 @@ export default function Products() {
         </div>
       </div>
 
-      {edit && <EditModal item={edit} onClose={() => setEdit(null)} onSave={(it) => { upsertItem(it); setEdit(null); }} />}
+      {activeEdit && <EditModal key={activeEdit.id} item={activeEdit} onClose={closeEditor} onSave={(it) => { upsertItem(it); closeEditor(); }} />}
       {stockFor && <StockModal item={stockFor} onClose={() => setStockFor(null)}
         onMove={(type, qty, note) => { moveStock(stockFor.id, type, qty, note); setStockFor(null); }}
         onSet={(v, note) => { setStock(stockFor.id, v, note); setStockFor(null); }} />}
+      {scanFind && <BarcodeScanner title="Scan to find product" onClose={() => setScanFind(false)} onDetected={(code) => {
+        setScanFind(false);
+        const found = items.find((i) => i.barcode && i.barcode === code);
+        if (found) { setStockFor(found); }
+        else if (mayEdit) { const b = blank(suppliers[0]?.id ?? ""); setEdit({ ...b, barcode: code }); }
+        else { setQ(code); }
+      }} />}
     </div>
   );
 }
@@ -143,22 +204,71 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function EditModal({ item, onClose, onSave }: { item: InventoryItem; onClose: () => void; onSave: (i: InventoryItem) => void }) {
-  const { suppliers } = useStore();
+  const { suppliers, toast } = useStore();
   const [f, setF] = useState<InventoryItem>(item);
+  const [scan, setScan] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const set = <K extends keyof InventoryItem>(k: K, v: InventoryItem[K]) => setF((p) => ({ ...p, [k]: v }));
   const isNew = item.id.startsWith("new-");
-  const save = () => { if (!f.name.trim()) return; onSave({ ...f, sku: f.sku || `SKU-${Math.random().toString(36).slice(2, 7).toUpperCase()}` }); };
+  const save = () => {
+    if (!f.name.trim()) {
+      toast("Enter a product name", "error");
+      return;
+    }
+    onSave({
+      ...f,
+      id: isNew ? `item-${crypto.randomUUID()}` : f.id,
+      name: f.name.trim(),
+      sku: f.sku.trim() || `SKU-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
+    });
+  };
+
+  const onPickFile = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast("Please choose an image file", "error"); return; }
+    setUploading(true);
+    try { set("image", await fileToDataUrl(file)); } catch { toast("Could not read that image", "error"); }
+    setUploading(false);
+  };
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/50 p-4" onClick={onClose}>
       <div className="card my-8 w-full max-w-lg p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="mb-4 text-lg font-black">{isNew ? "Add product" : "Edit product"}</h2>
+
+        {/* photo */}
+        <div className="mb-4 flex items-center gap-4">
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border bg-white" style={{ borderColor: "var(--border)" }}>
+            {f.image
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={f.image} alt="preview" className="h-full w-full object-contain p-1" />
+              : <ItemImage item={f} className="h-full w-full" />}
+          </div>
+          <div>
+            <div className="text-sm font-semibold">Product photo</div>
+            <div className="mb-2 text-xs text-[var(--text-faint)]">JPG or PNG — shown on lists &amp; cards.</div>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onPickFile(e.target.files?.[0])} />
+            <div className="flex gap-2">
+              <button type="button" onClick={() => fileRef.current?.click()} className="btn btn-outline btn-sm">{uploading ? "Loading…" : f.image ? "Change photo" : "Upload photo"}</button>
+              {f.image && <button type="button" onClick={() => set("image", undefined)} className="btn btn-sm" style={{ background: "#fde6ea", color: "var(--red)" }}>Remove</button>}
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2"><Field label="Product name"><input className="input" value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Merlin 4 Energizer" /></Field></div>
+          <div className="col-span-2"><Field label="Product name"><input className="input" value={f.name} onChange={(e) => set("name", e.target.value)} placeholder="e.g. Merlin 4 Energizer" required autoFocus /></Field></div>
           <Field label="Brand"><select className="input" value={f.brand} onChange={(e) => set("brand", e.target.value as Brand)}><option>NEMTEK</option><option>CENTURION</option></select></Field>
           <Field label="Category"><select className="input" value={f.category} onChange={(e) => set("category", e.target.value as CategoryKey)}>{(Object.keys(CATEGORIES) as CategoryKey[]).map((c) => <option key={c} value={c}>{CATEGORIES[c].label}</option>)}</select></Field>
           <Field label="SKU"><input className="input" value={f.sku} onChange={(e) => set("sku", e.target.value)} placeholder="auto" /></Field>
-          <Field label="Barcode"><input className="input" value={f.barcode} onChange={(e) => set("barcode", e.target.value)} placeholder="EAN/UPC" /></Field>
+          <div><label className="label">Barcode</label>
+            <div className="flex gap-2">
+              <input className="input" value={f.barcode} onChange={(e) => set("barcode", e.target.value)} placeholder="EAN/UPC" />
+              <button type="button" onClick={() => setScan(true)} className="btn btn-outline shrink-0" title="Scan barcode">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M6 8v8M10 8v8M14 8v8M18 8v8"/></svg>
+              </button>
+            </div>
+          </div>
           <Field label="Cost price (GH₵)"><input type="number" min={0} className="input" value={f.cost || ""} onChange={(e) => set("cost", Number(e.target.value))} /></Field>
           <Field label="Selling price (GH₵)"><input type="number" min={0} className="input" value={f.price || ""} onChange={(e) => set("price", Number(e.target.value))} /></Field>
           <Field label="Reorder level"><input type="number" min={0} className="input" value={f.reorderLevel || ""} onChange={(e) => set("reorderLevel", Number(e.target.value))} /></Field>
@@ -173,6 +283,7 @@ function EditModal({ item, onClose, onSave }: { item: InventoryItem; onClose: ()
           <button onClick={save} className="btn btn-primary">Save product</button>
         </div>
       </div>
+      {scan && <BarcodeScanner title="Scan product barcode" onClose={() => setScan(false)} onDetected={(code) => { set("barcode", code); setScan(false); toast("Barcode captured"); }} />}
     </div>
   );
 }

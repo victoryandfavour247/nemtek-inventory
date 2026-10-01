@@ -23,7 +23,7 @@ export default function Topbar() {
       <h1 className="text-lg font-black">{TITLES[path] ?? "NEMTEK"}</h1>
 
       <div className="ml-auto flex items-center gap-2">
-        <Link href="/inventory" className="btn btn-primary btn-sm hidden sm:inline-flex">
+        <Link href="/inventory?action=add" className="btn btn-primary btn-sm hidden sm:inline-flex">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
           Add product
         </Link>
