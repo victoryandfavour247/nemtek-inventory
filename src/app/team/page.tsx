@@ -3,25 +3,24 @@ import { useState } from "react";
 import { useStore } from "@/store/Store";
 import { can, ROLE_LABEL, hashPw, type Worker, type Role } from "@/lib/inventory";
 
-const blank = (): Worker => ({ id: "u-" + Math.random().toString(36).slice(2, 7), name: "", email: "", password: "", role: "cashier", active: true });
+const blank = (): Worker => ({ id: "u-" + Math.random().toString(36).slice(2, 7), name: "", email: "", password: "", role: "staff", active: true });
 
 export default function Team() {
-  const { workers, user, upsertWorker, deleteWorker, sales } = useStore();
+  const { workers, user, movements, upsertWorker, deleteWorker } = useStore();
   const [edit, setEdit] = useState<Worker | null>(null);
 
   if (!can.manageWorkers(user!.role)) {
     return <div className="card p-10 text-center"><p className="text-lg font-bold">Team management is owner-only</p><p className="mt-1 text-sm text-[var(--text-soft)]">Ask the owner to add or change staff accounts.</p></div>;
   }
 
-  const salesByUser = (id: string) => sales.filter((s) => s.cashierId === id);
+  const activityOf = (name: string) => movements.filter((m) => m.byName === name).length;
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end"><button onClick={() => setEdit(blank())} className="btn btn-primary btn-sm">+ Add team member</button></div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {workers.map((w) => {
-          const s = salesByUser(w.id);
-          const rev = s.reduce((a, b) => a + b.total, 0);
+          const acts = activityOf(w.name);
           return (
             <div key={w.id} className="card p-5">
               <div className="flex items-start justify-between">
@@ -33,7 +32,7 @@ export default function Team() {
               </div>
               <div className="mt-4 flex items-center gap-2">
                 <span className="pill pill-blue">{ROLE_LABEL[w.role]}</span>
-                <span className="text-xs text-[var(--text-faint)]">{s.length} sales · {rev.toLocaleString()} GH₵</span>
+                <span className="text-xs text-[var(--text-faint)]">{acts} stock actions</span>
               </div>
               <div className="mt-4 flex gap-2">
                 <button onClick={() => setEdit(w)} className="btn btn-ghost btn-sm flex-1">Edit</button>
@@ -69,12 +68,12 @@ function WorkerModal({ worker, onClose, onSave }: { worker: Worker; onClose: () 
           <div><label className="label">Work email</label><input className="input" value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="kofi@nemtek.gh" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="label">{isNew ? "Password" : "New password"}</label><input className="input" type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder={isNew ? "At least 6 characters" : "Leave blank to keep"} /></div>
-            <div><label className="label">Role</label><select className="input" value={f.role} onChange={(e) => set("role", e.target.value as Role)}><option value="cashier">Cashier</option><option value="manager">Manager</option><option value="owner">Owner</option></select></div>
+            <div><label className="label">Role</label><select className="input" value={f.role} onChange={(e) => set("role", e.target.value as Role)}><option value="staff">Storekeeper</option><option value="manager">Manager</option><option value="owner">Owner</option></select></div>
           </div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.active} onChange={(e) => set("active", e.target.checked)} className="h-4 w-4 accent-[var(--blue)]" /> Account active (can sign in)</label>
         </div>
         <div className="mt-3 rounded-lg p-2.5 text-xs" style={{ background: "var(--blue-50)", color: "var(--navy)" }}>
-          <b>Cashier:</b> sell only. <b>Manager:</b> + inventory &amp; reports. <b>Owner:</b> full access incl. team &amp; cost prices.
+          <b>Storekeeper:</b> receive/issue/adjust stock. <b>Manager:</b> + products, purchasing &amp; reports. <b>Owner:</b> full access incl. team &amp; costs.
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className="btn btn-ghost">Cancel</button>
