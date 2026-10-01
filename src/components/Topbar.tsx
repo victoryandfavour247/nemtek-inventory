@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useStore } from "@/store/Store";
 import { ROLE_LABEL } from "@/lib/inventory";
+import Brand from "./Brand";
 
 const TITLES: Record<string, string> = {
   "/": "Dashboard", "/pos": "Point of Sale", "/inventory": "Inventory",
@@ -18,6 +19,7 @@ export default function Topbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b bg-[var(--bg-elev)] px-4 lg:px-6" style={{ borderColor: "var(--border)" }}>
+      <span className="lg:hidden"><Brand size={34} showText={false} /></span>
       <h1 className="text-lg font-black">{TITLES[path] ?? "NEMTEK"}</h1>
 
       <div className="ml-auto flex items-center gap-2">

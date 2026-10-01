@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/store/Store";
 import { can } from "@/lib/inventory";
+import Brand from "./Brand";
 
 const ICONS: Record<string, React.ReactNode> = {
   dash: <path d="M3 13h8V3H3zM13 21h8V3h-8zM3 21h8v-6H3z" />,
@@ -32,9 +33,8 @@ export default function Sidebar() {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-[230px] shrink-0 flex-col border-r bg-[var(--surface)] p-3 lg:flex" style={{ borderColor: "var(--border)" }}>
-      <Link href="/" className="mb-4 flex items-center gap-2.5 px-2 pt-2">
-        <span className="grid h-10 w-10 place-items-center rounded-xl text-lg font-black text-white" style={{ background: "linear-gradient(135deg,var(--blue),var(--navy))" }}>N</span>
-        <div><div className="text-[15px] font-black leading-none">NEMTEK</div><div className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-faint)]">Inventory · POS</div></div>
+      <Link href="/" className="mb-4 px-2 pt-2">
+        <Brand size={40} />
       </Link>
 
       <nav className="flex flex-1 flex-col gap-1">

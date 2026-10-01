@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import {
-  seedInventory, seedWorkers,
+  seedInventory, seedWorkers, hashPw,
   type InventoryItem, type Worker, type Sale, type SaleLine, type Movement, type Role,
 } from "@/lib/inventory";
 
@@ -18,7 +18,8 @@ interface Ctx {
   user: Worker | null;
   toasts: Toast[];
   // auth
-  login: (email: string, pin: string) => { ok: boolean; error?: string };
+  login: (email: string, password: string) => { ok: boolean; error?: string };
+  signUp: (name: string, email: string, password: string) => { ok: boolean; error?: string };
   logout: () => void;
   // inventory
   upsertItem: (item: InventoryItem) => void;
@@ -36,7 +37,7 @@ interface Ctx {
 }
 
 const C = createContext<Ctx | null>(null);
-const K = { items: "nti.items", workers: "nti.workers", sales: "nti.sales", moves: "nti.moves", user: "nti.user" };
+const K = { items: "nti.v2.items", workers: "nti.v2.workers", sales: "nti.v2.sales", moves: "nti.v2.moves", user: "nti.v2.user" };
 
 function read<T>(k: string, fb: T): T {
   if (typeof window === "undefined") return fb;
@@ -75,13 +76,28 @@ export function Store({ children }: { children: React.ReactNode }) {
     setTimeout(() => dismissToast(id), 2600);
   }, [dismissToast]);
 
-  const login = useCallback((email: string, pin: string) => {
-    const w = workers.find((x) => x.email.toLowerCase() === email.toLowerCase().trim() && x.active);
-    if (!w) return { ok: false, error: "No active account with that email." };
-    if (w.pin !== pin.trim()) return { ok: false, error: "Incorrect PIN." };
+  const login = useCallback((email: string, password: string) => {
+    const w = workers.find((x) => x.email.toLowerCase() === email.toLowerCase().trim());
+    if (!w) return { ok: false, error: "No account found with that email." };
+    if (!w.active) return { ok: false, error: "This account has been disabled. Contact the owner." };
+    if (w.password !== hashPw(password)) return { ok: false, error: "Incorrect password." };
     setUser(w); write(K.user, w); toast(`Welcome, ${w.name.split(" ")[0]}!`);
     return { ok: true };
   }, [workers, toast]);
+
+  const signUp = useCallback((name: string, email: string, password: string) => {
+    const key = email.toLowerCase().trim();
+    if (!name.trim()) return { ok: false, error: "Enter your full name." };
+    if (!/^\S+@\S+\.\S+$/.test(key)) return { ok: false, error: "Enter a valid email." };
+    if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
+    if (workers.some((x) => x.email.toLowerCase() === key)) return { ok: false, error: "An account with this email already exists." };
+    const w: Worker = { id: "u-" + Math.random().toString(36).slice(2, 8), name: name.trim(), email: key, password: hashPw(password), role: "cashier", active: true };
+    setWorkers((prev) => [...prev, w]);
+    setUser(w); write(K.user, w);
+    toast(`Account created — welcome, ${w.name.split(" ")[0]}!`);
+    return { ok: true };
+  }, [workers, toast]);
+
   const logout = useCallback(() => { setUser(null); write(K.user, null); }, []);
 
   const addMovement = useCallback((m: Omit<Movement, "id" | "date" | "byName">) => {
@@ -161,9 +177,9 @@ export function Store({ children }: { children: React.ReactNode }) {
 
   const value: Ctx = useMemo(() => ({
     ready, items, workers, sales, movements, user, toasts,
-    login, logout, upsertItem, deleteItem, restock, adjustStock,
+    login, signUp, logout, upsertItem, deleteItem, restock, adjustStock,
     upsertWorker, deleteWorker, recordSale, toast, dismissToast,
-  }), [ready, items, workers, sales, movements, user, toasts, login, logout, upsertItem, deleteItem, restock, adjustStock, upsertWorker, deleteWorker, recordSale, toast, dismissToast]);
+  }), [ready, items, workers, sales, movements, user, toasts, login, signUp, logout, upsertItem, deleteItem, restock, adjustStock, upsertWorker, deleteWorker, recordSale, toast, dismissToast]);
 
   return <C.Provider value={value}>{children}</C.Provider>;
 }

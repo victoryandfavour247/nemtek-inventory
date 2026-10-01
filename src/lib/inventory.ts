@@ -27,9 +27,16 @@ export interface Worker {
   id: string;
   name: string;
   email: string;
-  pin: string;        // 4-digit login pin (demo only)
+  password: string;   // stored hashed (see hashPw)
   role: Role;
   active: boolean;
+}
+
+/* lightweight non-crypto hash — demo only, so we never store a raw password */
+export function hashPw(s: string): string {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = (h * 33) ^ s.charCodeAt(i);
+  return (h >>> 0).toString(16);
 }
 
 export interface SaleLine {
@@ -99,12 +106,18 @@ export function seedInventory(): InventoryItem[] {
   });
 }
 
+/* demo credentials (plaintext) — shown on the login screen for convenience */
+export const DEMO_CREDS = [
+  { name: "Dennis (Owner)", email: "owner@nemtek.gh", password: "owner123", role: "owner" as Role },
+  { name: "Ama Boateng", email: "ama@nemtek.gh", password: "manager123", role: "manager" as Role },
+  { name: "Kofi Mensah", email: "kofi@nemtek.gh", password: "cashier123", role: "cashier" as Role },
+];
+
 export function seedWorkers(): Worker[] {
-  return [
-    { id: "u-owner", name: "Dennis (Owner)", email: "owner@nemtek.gh", pin: "1234", role: "owner", active: true },
-    { id: "u-mgr", name: "Ama Boateng", email: "ama@nemtek.gh", pin: "2222", role: "manager", active: true },
-    { id: "u-cash", name: "Kofi Mensah", email: "kofi@nemtek.gh", pin: "3333", role: "cashier", active: true },
-  ];
+  return DEMO_CREDS.map((d, i) => ({
+    id: ["u-owner", "u-mgr", "u-cash"][i],
+    name: d.name, email: d.email, password: hashPw(d.password), role: d.role, active: true,
+  }));
 }
 
 export const ROLE_LABEL: Record<Role, string> = {

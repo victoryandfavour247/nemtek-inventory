@@ -2,6 +2,7 @@
 import { useStore } from "@/store/Store";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import MobileNav from "./MobileNav";
 import Login from "./Login";
 
 export default function Shell({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
+        <MobileNav />
         <main className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
     </div>
